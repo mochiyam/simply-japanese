@@ -1,2 +1,6 @@
+<<<<<<< Updated upstream
 #!/home/andi/.pyenv/versions/3.8.12/envs/simply-japanese/bin/python
+=======
+#!/root/.pyenv/versions/3.8.12/envs/simply-japanese/bin/python
+>>>>>>> Stashed changes
 # -*- coding: utf-8 -*-
