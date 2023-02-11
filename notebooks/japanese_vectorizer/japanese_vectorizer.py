@@ -1,63 +1,26 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import argparse
 import logging
 import os
 import time
 from multiprocessing import cpu_count
 
 import tinysegmenter
-import wget
 from gensim.corpora import WikiCorpus
 from gensim.models import Word2Vec
 from gensim.models.word2vec import LineSentence
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-parser = argparse.ArgumentParser(description='Word2vec approach for Japanese language using Gensim.')
-parser.add_argument(
-    '--mecab',
-    help='Use Mecap as tokenizer',
-    action='store_true',
-    required=False
-)
 
-parser.add_argument(
-    '--wiki',
-    help='Path to Wikipedia dump as bzip2',
-    dest='wikipath',
-    required=False
-)
-
-parser.add_argument(
-    '--vectorsize',
-    type=int,
-    required=False,
-    help='Gensim Vector Size'
-)
-
-parser.set_defaults(
-    wikipath='jawiki-latest-pages-articles.xml.bz2',
-    mecab=False,
-    vectorsize=50
-)
-
-args = parser.parse_args()
-
-USE_MECAB_TOKENIZER = args.mecab
-VECTORS_SIZE = args.vectorsize
-INPUT_FILENAME = args.wikipath
-
-JA_WIKI_TEXT_FILENAME = 'jawiki-latest-text.txt'
-JA_WIKI_SENTENCES_FILENAME = 'jawiki-latest-text-sentences.txt'
-
-JA_WIKI_TEXT_TOKENS_FILENAME = 'jawiki-latest-text-tokens.txt'
-JA_WIKI_SENTENCES_TOKENS_FILENAME = 'jawiki-latest-text-sentences-tokens.txt'
+USE_MECAB_TOKENIZER = True
+VECTORS_SIZE = 50
+INPUT_FILENAME = "input.xlsx"
 
 JA_VECTORS_MODEL_FILENAME = 'ja-gensim.{}d.data.model'.format(VECTORS_SIZE)
 JA_VECTORS_TEXT_FILENAME = 'ja-gensim.{}d.data.txt'.format(VECTORS_SIZE)
-JA_WIKI_LATEST_URL = 'https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2'
+
 
 if USE_MECAB_TOKENIZER:
     logging.info('Using the MeCab tokenizer. Installation procedure is ' +
@@ -65,10 +28,8 @@ if USE_MECAB_TOKENIZER:
     import MeCab
 else:
     logging.info('Using the tinysegmenter tokenizer. Its not very accurate. ' +
-                 'Consider using MeCab instead with option --mecab.')
+                 'Consider using MeCab instead.')
 
-# CHECK WHERE THE HECK ARE THE PUNCTUATIONS GONE. Okay it's in get_text()
-# WHY WE DO NOT HAVE ANY OUTPUT ON WORD2VEC. We have to define a logging interface
 
 def generate_vectors(input_filename, output_filename, output_filename_2):
 
@@ -181,3 +142,6 @@ def process_wiki_to_text(input_filename, output_text_filename, output_sentences_
                                                                                                            sentences_per_sec))
         logging.info(
             'Finished process_wiki_to_text(). It took {0:.2f} s to execute.'.format(round(time.time() - start, 2)))
+
+if __name__ == '__main__':
+    print(os.getcwd())
