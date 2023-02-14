@@ -5,8 +5,6 @@ import logging
 import os
 import time
 from multiprocessing import cpu_count
-
-import tinysegmenter
 from gensim.corpora import WikiCorpus
 from gensim.models import Word2Vec
 from gensim.models.word2vec import LineSentence
@@ -14,25 +12,23 @@ from gensim.models.word2vec import LineSentence
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 
-USE_MECAB_TOKENIZER = True
 VECTORS_SIZE = 50
-INPUT_FILENAME = "input.xlsx"
+input_filename = "Input_150.xlsx"
+output_filename = "model_file.txt"
+output_filename_2 = "model_wv.txt"
 
-JA_VECTORS_MODEL_FILENAME = 'ja-gensim.{}d.data.model'.format(VECTORS_SIZE)
-JA_VECTORS_TEXT_FILENAME = 'ja-gensim.{}d.data.txt'.format(VECTORS_SIZE)
-
-
-if USE_MECAB_TOKENIZER:
-    logging.info('Using the MeCab tokenizer. Installation procedure is ' +
-                 'provided at http://www.robfahey.co.uk/blog/japanese-text-analysis-in-python/')
-    import MeCab
-else:
-    logging.info('Using the tinysegmenter tokenizer. Its not very accurate. ' +
-                 'Consider using MeCab instead.')
-
+JA_VECTORS_MODEL_FILENAME = f'ja-gensim.{VECTORS_SIZE}d.data.model'
+JA_VECTORS_TEXT_FILENAME = f'ja-gensim.{VECTORS_SIZE}d.data.txt'
 
 def generate_vectors(input_filename, output_filename, output_filename_2):
+    """
+    Takes a list sentences in _input_filename, and converts them
 
+
+    input_filename:    list of sentences
+    output_filename:   model
+    output_filename_2: wv of model
+    """
     if os.path.isfile(output_filename):
         logging.info('Skipping generate_vectors(). File already exists: {}'.format(output_filename))
         return
@@ -40,11 +36,11 @@ def generate_vectors(input_filename, output_filename, output_filename_2):
     start = time.time()
 
     model = Word2Vec(LineSentence(input_filename),
-                     size=VECTORS_SIZE,
+                     vector_size=VECTORS_SIZE,
                      window=5,
                      min_count=5,
                      workers=4,
-                     iter=5)
+                     epochs=5)
 
     model.save(output_filename)
     model.wv.save_word2vec_format(output_filename_2, binary=False)
@@ -82,10 +78,7 @@ def tokenize_text(input_filename, output_filename):
 
             for i, text in enumerate(inp.readlines()):
 
-                if USE_MECAB_TOKENIZER:
-                    tokenized_text = ' '.join(get_words(text))
-                else:
-                    tokenized_text = ' '.join(tinysegmenter.tokenize(text))
+                tokenized_text = ' '.join(get_words(text))
 
                 out.write(tokenized_text + '\n')
 
