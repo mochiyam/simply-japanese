@@ -1,0 +1,3 @@
+[submodule "data/2_RawData/data/2_RawData/rougescore"]
+	path = data/2_RawData/data/2_RawData/rougescore
+	url = https://github.com/bdusell/rougescore.git
