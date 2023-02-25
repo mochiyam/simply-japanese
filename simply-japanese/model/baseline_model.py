@@ -11,24 +11,21 @@ import collections
 from nltk.corpus import stopwords
 from gensim.models.word2vec import Word2Vec
 
+# Scoring
+from simply-japanese.utils.scoring
+
 # Logging
 import logging
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
 
-def get_data():
+def get_data(file):
     """
     Gets csv data under from data
     Returns as Dataframe where columns=['original','simplified']
     """
-    path = os.path.join("simply_japanese", "data")
-
-    if os.environ.get("DATA_SOURCE") == "TEST":
-        file = os.environ.get("TEST_DATA")
-    elif os.environ.get("DATA_SOURCE") == "DEPLOY":
-        file = os.environ.get("DEPLOY_DATA")
-    else:
-        raise Exception ("Data source not or incorrectly specified in env.")
+    path = os.environ.get("LOCAL_PATH")
+    path = os.path.join(path, "simply-japanese", "data", "1_RawData")
 
     df = pd.read_excel(os.path.join(path, file))
 
@@ -53,7 +50,6 @@ def term_frequency(df, col='original'):
         node = t.parseToNode(text).next
         while node.next:
             part_of_speech = node.feature.split(',')[0]
-            # TBD
             if part_of_speech in ["助動詞", "助詞", "補助記号"] or node.surface in jp_stopwords:
                 node = node.next
                 continue
@@ -134,7 +130,7 @@ def replace_terms(data, term_list, wv):
             if is_romaji(node.surface):
                 sentence.append(node.surface)
                 node = node.next
-            word = node.feature.split(',')[8]
+            word = node.feature.split(',')[6]
             part_of_speech = node.feature.split(',')[0]
             # If POS is not noun, pronoun or verb: add word to list and continue
             if part_of_speech not in pos_list:
@@ -165,8 +161,28 @@ def replace_terms(data, term_list, wv):
     return prediction
 
 
-def predict(data):
-    term_list = get_simplified_terms(X150, 2000)
-    model = Word2Vec.load("word2vec.gensim.model")
+def predict_baseline(file):
+    # Define path of gensim model and load it
+    model_path = os.path.join(os.environ.get("LOCAL_PATH"), "simply-japanese", \
+                                "data", "0_GensimModel", "word2vec.gensim.model")
+    model = Word2Vec.load(model_path)
 
-    replace_terms(data, term_list=term_list, wv=model.wv)
+    # Create df, term list of 2000 most common terms
+    df_baseline = get_data(file)
+    term_list = get_simplified_terms(df_baseline, 2000)
+
+    predictions = replace_terms(df_baseline["original"], term_list=term_list, wv=model.wv)
+
+    df_baseline_predictions = df_baseline.assign(predictions=predictions)
+
+    return df_baseline_predictions
+
+def save_baseline(file):
+    predictions = predict_baseline(file)
+    # Score baseline
+
+    # Define output path for final XLSX
+    output_path = os.path.join(os.environ.get("LOCAL_PATH"), "simply-japanese", \
+                                "data", "2_ProcessedData")
+    os.chdir(output_path)
+    predictions.to_excel(f"{file}_baseline_predictions.xlsx")

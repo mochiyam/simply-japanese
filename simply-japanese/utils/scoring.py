@@ -5,7 +5,7 @@ from nltk.translate.bleu_score import sentence_bleu
 
 def bleu_score_sentence(reference, target):
     """
-    Takes two strings of data, evaluates the bleu score and returns it as a float 
+    Takes two strings of data, evaluates the bleu score and returns it as a float
     Input:
     reference (string) = "correct" translation as reference
     target (string) = translated text (MT)
@@ -16,7 +16,7 @@ def bleu_score_sentence(reference, target):
 
 def bleu_score_series(source, reference, target):
     """
-    Takes two series of data, evaluates the bleu score and returns it as a float 
+    Takes two series of data, evaluates the bleu score and returns it as a float
     Input:
     reference (series) = "correct" translation as reference
     target (series) = translated text (MT)
@@ -25,11 +25,11 @@ def bleu_score_series(source, reference, target):
     """
     len(reference) == len(target)
     bleu_list = []
-        
+
     for i in range(len(source)):
         bleu_list.append(bleu_score_sentence(reference[i], target[i]))
-    
-    
+
+
     bleu = pd.Series(bleu_list)
     return bleu
 
@@ -108,8 +108,8 @@ def wer_score(predicted, simplified, debug=True):
                 lines.append("DEL\t" + r[i]+"\t"+"****")
     return (numSub + numDel + numIns) / (float) (len(r))
     wer_result = round( (numSub + numDel + numIns) / (float) (len(r)), 3)
-    
-    
+
+
 def wer_jp(original, simplified):
     ori = ''
     simpi = ''
@@ -120,10 +120,22 @@ def wer_jp(original, simplified):
     return round(wer_score(ori, simpi),3)
 
 
-def evaluate_wer_score(df):
+def evaluate_wer_score(df, c1, c2, score):
     wer_list = []
     for i in df.index:
-        original_text = df.iloc[i][0]
-        simplified_text = df.iloc[i][1]
+        original_text = df.iloc[i][c1]
+        simplified_text = df.iloc[i][c2]
         wer_list.append(wer_jp(original_text, simplified_text))
-    df['WER_score'] = wer_list
+    df[score] = wer_list
+
+    return df
+
+def evaluate_blue_score(df, c1, c2, score):
+    blue_list = []
+    for i in df.index:
+        original_text = df.iloc[i][c1]
+        simplified_text = df.iloc[i][c2]
+        blue_list.append(bleu_score_sentence(original_text, simplified_text))
+    df[score] = blue_list
+
+    return df
