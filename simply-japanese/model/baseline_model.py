@@ -1,34 +1,27 @@
+import collections
 import os
 import pandas as pd
-import numpy as np
 import re
+import time
 
 # Preprocessing
 import MeCab
 import neologdn
 import collections
-from nltk import FreqDist
 from nltk.corpus import stopwords
-
-import time
-import logging
-import collections
-import logging
-import time
 from gensim.models.word2vec import Word2Vec
+
+# Logging
+import logging
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
-
-# Visualization
-import matplotlib.pyplot as plt
-import japanize_matplotlib
 
 def get_data():
     """
     Gets csv data under from data
     Returns as Dataframe where columns=['original','simplified']
     """
-    path = os.environ.get("LOCAL_DATA_PATH")
+    path = os.path.join("simply_japanese", "data")
 
     if os.environ.get("DATA_SOURCE") == "TEST":
         file = os.environ.get("TEST_DATA")
