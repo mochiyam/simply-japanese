@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import pandas as pd
 from nltk.translate.bleu_score import sentence_bleu
 

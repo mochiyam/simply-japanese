@@ -12,7 +12,7 @@ from nltk.corpus import stopwords
 from gensim.models.word2vec import Word2Vec
 
 # Scoring
-from simply-japanese.utils.scoring
+from simplyJapanese.utils.scoring import evaluate_wer_score, evaluate_blue_score
 
 # Logging
 import logging
@@ -25,7 +25,7 @@ def get_data(file):
     Returns as Dataframe where columns=['original','simplified']
     """
     path = os.environ.get("LOCAL_PATH")
-    path = os.path.join(path, "simply-japanese", "data", "1_RawData")
+    path = os.path.join(path, "simplyJapanese", "data", "1_RawData")
 
     df = pd.read_excel(os.path.join(path, file))
 
@@ -163,7 +163,7 @@ def replace_terms(data, term_list, wv):
 
 def predict_baseline(file):
     # Define path of gensim model and load it
-    model_path = os.path.join(os.environ.get("LOCAL_PATH"), "simply-japanese", \
+    model_path = os.path.join(os.environ.get("LOCAL_PATH"), "simplyJapanese", \
                                 "data", "0_GensimModel", "word2vec.gensim.model")
     model = Word2Vec.load(model_path)
 
@@ -179,10 +179,19 @@ def predict_baseline(file):
 
 def save_baseline(file):
     predictions = predict_baseline(file)
-    # Score baseline
-
+    ## Score baseline
+    # Add WER score for original simplification
+    predictions = evaluate_wer_score(predictions, 0, 1, "Original WER Score")
+    # Add WER score for baseline model simplification
+    predictions = evaluate_wer_score(predictions, 0, 2, "Baseline WER score vs original")
+    # Add BLUE score for original simplification
+    predictions = evaluate_blue_score(predictions, 0, 1, "Original BLUE Score")
+    # Add BLUE score for baseline model simplification; original data vs preds
+    predictions = evaluate_blue_score(predictions, 0, 2, "Baseline BLUE score vs original")
+    # Add BLUE score for baseline model simplification, simplification vs preds
+    predictions = evaluate_blue_score(predictions, 1, 2, "Baseline BLUE score vs simplification")
     # Define output path for final XLSX
-    output_path = os.path.join(os.environ.get("LOCAL_PATH"), "simply-japanese", \
+    output_path = os.path.join(os.environ.get("LOCAL_PATH"), "simplyJapanese", \
                                 "data", "2_ProcessedData")
     os.chdir(output_path)
     predictions.to_excel(f"{file}_baseline_predictions.xlsx")
