@@ -9,6 +9,15 @@ numpy
 pandas
 scikit-learn
 
+# Finetuning and training model
+# FIXME add versions
+datasets
+transformers
+sentencepiece
+
+# metric evaluation
+sacrebleu[ja]
+
 # tests/linter
 black
 coverage
