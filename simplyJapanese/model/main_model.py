@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
-# import nltk FIXME
+import nltk #FIXME
 from datasets import (Dataset,
                       DatasetDict,
                       load_dataset,
@@ -14,13 +14,13 @@ from transformers import (AutoTokenizer,
                           AdamWeightDecay)
 from transformers.keras_callbacks import KerasMetricCallback
 
-from model.params import (MODEL_NAME,
+from simplyJapanese.model.params import (MODEL_NAME,
                           INPUT_COL_NAME,
                           LABEL_COL_NAME,
                           MAX_TOKEN_INPUT_LENGTH,
                           MAX_TOKEN_TARGET_LENGTH)
 
-from model.params import (BATCH_SIZE,
+from simplyJapanese.model.params import (BATCH_SIZE,
                           LEARNING_RATE,
                           WEIGHT_DECAY,
                           NUM_EPOCHS)
@@ -30,7 +30,7 @@ def preprocess_and_train():
     Preprocess the raw data retreived as an xlsx file.
     Fine-tuning and train on pretrained model.
     """
-    path = os.path.join("simply_japanese", "data")
+    path = os.path.join("simplyJapanese", 'data', "1_RawData")
 
     if os.environ.get("DATA_SOURCE") == "TEST":
         file = os.environ.get("TEST_DATA")
@@ -64,15 +64,22 @@ def preprocess_and_train():
 
     tokenized_datasets = datasets.map(tokenize_fn, batched=True)
 
+    print("Load Metric")
     # Load the metric score.
-    metric = load_metric("bleu")
+    metric = load_metric("sacrebleu")
+
+    print("Load PreTrained Model")
     model = TFAutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, from_pt=True)
+
+    print("Get Data Collator")
     # Data collator that will dynamically pad the inputs received, as well as the labels.
     data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np")
     # Compile generation loop with XLA generation to improve speed!  add pad_to_multiple_of to avoid
     # variable input shape, because XLA no likey.
     generation_data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np", pad_to_multiple_of=128)
 
+
+    print("Prepare Train TF Datasets...")
     # Convert tf.data.Dataset to Model.prepare_tf_dataset
     # using Model to choose which columns you can use as input.
     train_dataset = model.prepare_tf_dataset(
@@ -82,6 +89,7 @@ def preprocess_and_train():
         collate_fn=data_collator,
     )
 
+    print("Prepare Validation TF Datasets...")
     validation_dataset = model.prepare_tf_dataset(
         tokenized_datasets["validation"],
         batch_size=BATCH_SIZE,
@@ -89,6 +97,7 @@ def preprocess_and_train():
         collate_fn=data_collator,
     )
 
+    print("Prepare Test TF Datasets...")
     generation_dataset = model.prepare_tf_dataset(
         tokenized_datasets["validation"],
         batch_size=BATCH_SIZE,
@@ -96,6 +105,7 @@ def preprocess_and_train():
         collate_fn=generation_data_collator
     )
 
+    print("Model Compiling...")
     # Initialize optimizer and loss
     # Note: Most Transformers models compute loss internally
     # We can train on this as our loss value simply by not specifying a loss when we compile().
@@ -111,26 +121,40 @@ def preprocess_and_train():
         labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
         decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-        decoded_preds = [pred.strip() for pred in decoded_preds if pred != '']
-        decoded_labels = [[label.strip()] for label in decoded_labels if label != '']
+        decoded_preds = [pred.strip() for pred in decoded_preds]
+        decoded_labels = [[label.strip()] for label in decoded_labels]
 
-        result = metric.compute(predictions=decoded_preds, references=decoded_labels)
+        print
 
+        result = metric.compute(predictions=[decoded_preds], references=[decoded_labels], tokenize='ja-mecab ')
         result = {"bleu": result["score"]}
-
         prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
         result["gen_len"] = np.mean(prediction_lens)
         result = {k: round(v, 4) for k, v in result.items()}
-
         return result
+
+    metric_callback = KerasMetricCallback(
+        metric_fn, eval_dataset=generation_dataset, predict_with_generate=True, use_xla_generation=True
+    )
+
+    print("Model Fit...")
+    model.fit(
+        train_dataset,
+        validation_data=validation_dataset,
+        batch_size=BATCH_SIZE,
+        epochs=NUM_EPOCHS,
+        callbacks=[metric_callback]
+    )
+
+    model_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
+    model.save(model_path)
+
+    print("/n✅ Woohoo! Model Saved! 😎 ")
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Clean data by renaming the columns and dropping the English column.
     # """
-    # path = "data/"
-    # df = pd.read_excel(os.path.join(path, 'SNOW_T15_150.xlsx'))
-    # df = pd.read_excel(os.path.join(path, 'Combined_85K.xlsx'))
     df.drop(columns=['#英語(原文)'], inplace=True)
     df.rename(columns={"#日本語(原文)": INPUT_COL_NAME, "#やさしい日本語": LABEL_COL_NAME}, inplace=True)
 
@@ -156,3 +180,8 @@ def train_val_test_split(df: pd.DataFrame) -> DatasetDict:
     print("\n✅ Data Splitted!")
 
     return datasets
+
+
+
+if __name__ == '__main__':
+    preprocess_and_train()
