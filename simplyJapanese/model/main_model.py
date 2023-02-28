@@ -64,15 +64,22 @@ def preprocess_and_train():
 
     tokenized_datasets = datasets.map(tokenize_fn, batched=True)
 
+    print("Load Metric")
     # Load the metric score.
     metric = load_metric("sacrebleu")
+
+    print("Load PreTrained Model")
     model = TFAutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, from_pt=True)
+
+    print("Get Data Collator")
     # Data collator that will dynamically pad the inputs received, as well as the labels.
     data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np")
     # Compile generation loop with XLA generation to improve speed!  add pad_to_multiple_of to avoid
     # variable input shape, because XLA no likey.
     generation_data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np", pad_to_multiple_of=128)
 
+
+    print("Prepare Train TF Datasets...")
     # Convert tf.data.Dataset to Model.prepare_tf_dataset
     # using Model to choose which columns you can use as input.
     train_dataset = model.prepare_tf_dataset(
@@ -82,6 +89,7 @@ def preprocess_and_train():
         collate_fn=data_collator,
     )
 
+    print("Prepare Validation TF Datasets...")
     validation_dataset = model.prepare_tf_dataset(
         tokenized_datasets["validation"],
         batch_size=BATCH_SIZE,
@@ -89,6 +97,7 @@ def preprocess_and_train():
         collate_fn=data_collator,
     )
 
+    print("Prepare Test TF Datasets...")
     generation_dataset = model.prepare_tf_dataset(
         tokenized_datasets["validation"],
         batch_size=BATCH_SIZE,
@@ -96,6 +105,7 @@ def preprocess_and_train():
         collate_fn=generation_data_collator
     )
 
+    print("Model Compiling...")
     # Initialize optimizer and loss
     # Note: Most Transformers models compute loss internally
     # We can train on this as our loss value simply by not specifying a loss when we compile().
@@ -114,18 +124,20 @@ def preprocess_and_train():
         decoded_preds = [pred.strip() for pred in decoded_preds]
         decoded_labels = [[label.strip()] for label in decoded_labels]
 
+        print
+
         result = metric.compute(predictions=[decoded_preds], references=[decoded_labels], tokenize='ja-mecab ')
         result = {"bleu": result["score"]}
         prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
         result["gen_len"] = np.mean(prediction_lens)
         result = {k: round(v, 4) for k, v in result.items()}
-        print(result, '=============================')
         return result
 
     metric_callback = KerasMetricCallback(
-        metric_fn, eval_dataset=generation_dataset, predict_with_generate=True#, use_xla_generation=True
+        metric_fn, eval_dataset=generation_dataset, predict_with_generate=True, use_xla_generation=True
     )
 
+    print("Model Fit...")
     model.fit(
         train_dataset,
         validation_data=validation_dataset,
@@ -136,6 +148,8 @@ def preprocess_and_train():
 
     model_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
     model.save(model_path)
+
+    print("/n✅ Woohoo! Model Saved! 😎 ")
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
