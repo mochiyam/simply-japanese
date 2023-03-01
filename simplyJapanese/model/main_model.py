@@ -126,7 +126,7 @@ def preprocess_and_train():
 
         print
 
-        result = metric.compute(predictions=[decoded_preds], references=[decoded_labels], tokenize='ja-mecab ')
+        result = metric.compute(predictions=[decoded_preds], references=[decoded_labels], tokenize='ja-mecab')
         result = {"bleu": result["score"]}
         prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
         result["gen_len"] = np.mean(prediction_lens)
