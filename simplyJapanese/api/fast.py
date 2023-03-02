@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pynpm import NPMPackage
 import pandas as pd
+
 
 app = FastAPI()
 app.state.model = load_model() # Needs to be defined
@@ -16,7 +18,7 @@ app.add_middleware(
 @app.get("/predict")
 def predict(input_data):
     """
-
+    Taking the input from the user into our
     """
 
     # preprocess data (sentence splitting, normalization, )
@@ -28,7 +30,7 @@ def predict(input_data):
     # Format y_pred to match output data requirements
     output_data = y_pred
 
-    return {"fare_amount": output_data}
+    return {"activity": "It's happpening"}
 
 
 @app.get("/")
