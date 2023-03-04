@@ -17,8 +17,8 @@ app.add_middleware(
 
 @app.get("/predict")
 def predict(input_data):
-    """\
-    Taking the input from the user into our.\\
+    """
+    Taking the input text and predict using our model.
     """
 
     # preprocess data (sentence splitting, normalization, )
@@ -30,7 +30,6 @@ def predict(input_data):
     # Format y_pred to match output data requirements
     output_data = y_pred
 
-    print(app.state.tokenizer)
     return {"activity": "It's happpening"}
 
 
