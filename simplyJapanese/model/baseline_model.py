@@ -130,7 +130,11 @@ def replace_terms(data, term_list, wv):
             if is_romaji(node.surface):
                 sentence.append(node.surface)
                 node = node.next
-            word = node.feature.split(',')[6]
+            try:
+                word = node.feature.split(',')[8]
+            except:
+                print(node.feature.split(','), "raised an error.")
+                word = node.feature.split(',')[6]
             part_of_speech = node.feature.split(',')[0]
             # If POS is not noun, pronoun or verb: add word to list and continue
             if part_of_speech not in pos_list:
