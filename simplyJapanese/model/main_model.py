@@ -1,4 +1,5 @@
 import os
+import time
 import pandas as pd
 import numpy as np
 from datasets import (Dataset,
@@ -7,11 +8,11 @@ from datasets import (Dataset,
                       load_metric)
 from sklearn.model_selection import train_test_split
 
-from transformers import (AutoTokenizer,
-                          TFAutoModelForSeq2SeqLM,
+from transformers import (TFAutoModelForSeq2SeqLM,
                           DataCollatorForSeq2Seq,
                           AdamWeightDecay)
 from transformers.keras_callbacks import KerasMetricCallback
+from tensorflow.keras.callbacks import EarlyStopping
 
 from simplyJapanese.model.params import (MODEL_NAME,
                           INPUT_COL_NAME,
@@ -24,7 +25,7 @@ from simplyJapanese.model.params import (BATCH_SIZE,
                           WEIGHT_DECAY,
                           NUM_EPOCHS)
 
-from simplyJapanese.model.registery import save_model, load_model
+from simplyJapanese.model.registery import save_model, load_tokenizer
 
 def preprocess_and_train():
     """
@@ -44,8 +45,7 @@ def preprocess_and_train():
 
     df = clean_data(df)
     datasets = train_val_test_split(df)
-
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = load_tokenizer()
 
     # FIXME this gotta go outta here
     def tokenize_fn(datasets: DatasetDict):
@@ -127,13 +127,24 @@ def preprocess_and_train():
         metric_fn, eval_dataset=generation_dataset, predict_with_generate=True, use_xla_generation=True
     )
 
-    model.fit(
+    es = EarlyStopping(monitor='bleu',
+                    mode='max',
+                    patience=5,
+                    verbose=1,
+                    restore_best_weights=True)
+
+
+    start_time = time.time()
+    history = model.fit(
         train_dataset,
         validation_data=validation_dataset,
         batch_size=BATCH_SIZE,
         epochs=NUM_EPOCHS,
-        callbacks=[metric_callback]
+        callbacks=[metric_callback, es],
+        verbose=1)
     )
+    print(time.time() - start_time)
+    print("/n⏰ Time to train:  {time.time() - start_time} seconds")
 
     save_model(model)
 
