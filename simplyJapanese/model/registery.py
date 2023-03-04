@@ -38,22 +38,20 @@ def load_model():
 
 
 def load_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = None
+    tokenizer_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
+    while True:
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            print("woohooo!!!!!!!!!!!!!!!!!!!!!!!!!")
+            break
+        except:
+            if not tokenizer :
+                tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+                tokenizer.save_pretrained(tokenizer_path)
+    print("\n✅ Tokenizer loaded from disk!")
+
     return tokenizer
-
-    #FIXME
-    # tokenizer_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
-    # while True:
-    #     try:
-    #         tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    #         break
-    #     except EnvironmetError:
-    #         if not tokenizer :
-    #             tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    #             tokenizer.save_pretrained(tokenizer_path)
-    # print("\n✅ Tokenizer loaded from disk!")
-
-    # return tokenizer
 
 
 def save_model(model):

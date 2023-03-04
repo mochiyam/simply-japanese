@@ -129,7 +129,7 @@ def preprocess_and_train():
 
     es = EarlyStopping(monitor='bleu',
                     mode='max',
-                    patience=5,
+                    patience=3,
                     verbose=1,
                     restore_best_weights=True)
 
@@ -142,7 +142,6 @@ def preprocess_and_train():
         epochs=NUM_EPOCHS,
         callbacks=[metric_callback, es],
         verbose=1)
-    )
     print(time.time() - start_time)
     print("/n⏰ Time to train:  {time.time() - start_time} seconds")
 
