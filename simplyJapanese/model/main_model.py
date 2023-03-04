@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-import nltk #FIXME
 from datasets import (Dataset,
                       DatasetDict,
                       load_dataset,
@@ -69,72 +68,72 @@ def preprocess_and_train():
     # Load the metric score.
     metric = load_metric("sacrebleu")
 
-    model = TFAutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, from_pt=True)
+    model = None #TFAutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, from_pt=True)
 
-    # Data collator that will dynamically pad the inputs received, as well as the labels.
-    data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np")
-    # Compile generation loop with XLA generation to improve speed!  add pad_to_multiple_of to avoid
-    # variable input shape, because XLA no likey.
-    generation_data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np", pad_to_multiple_of=128)
+    # # Data collator that will dynamically pad the inputs received, as well as the labels.
+    # data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np")
+    # # Compile generation loop with XLA generation to improve speed!  add pad_to_multiple_of to avoid
+    # # variable input shape, because XLA no likey.
+    # generation_data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="np", pad_to_multiple_of=128)
 
-    # Convert tf.data.Dataset to Model.prepare_tf_dataset
-    # using Model to choose which columns you can use as input.
-    train_dataset = model.prepare_tf_dataset(
-        tokenized_datasets["train"],
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-        collate_fn=data_collator,
-    )
+    # # Convert tf.data.Dataset to Model.prepare_tf_dataset
+    # # using Model to choose which columns you can use as input.
+    # train_dataset = model.prepare_tf_dataset(
+    #     tokenized_datasets["train"],
+    #     batch_size=BATCH_SIZE,
+    #     shuffle=True,
+    #     collate_fn=data_collator,
+    # )
 
-    validation_dataset = model.prepare_tf_dataset(
-        tokenized_datasets["validation"],
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        collate_fn=data_collator,
-    )
+    # validation_dataset = model.prepare_tf_dataset(
+    #     tokenized_datasets["validation"],
+    #     batch_size=BATCH_SIZE,
+    #     shuffle=False,
+    #     collate_fn=data_collator,
+    # )
 
-    generation_dataset = model.prepare_tf_dataset(
-        tokenized_datasets["validation"],
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        collate_fn=generation_data_collator
-    )
+    # generation_dataset = model.prepare_tf_dataset(
+    #     tokenized_datasets["validation"],
+    #     batch_size=BATCH_SIZE,
+    #     shuffle=False,
+    #     collate_fn=generation_data_collator
+    # )
 
-    # Initialize optimizer and loss
-    # Note: Most Transformers models compute loss internally
-    # We can train on this as our loss value simply by not specifying a loss when we compile().
-    optimizer = AdamWeightDecay(learning_rate=LEARNING_RATE,
-                                weight_decay_rate=WEIGHT_DECAY)
-    model.compile(optimizer=optimizer)
+    # # Initialize optimizer and loss
+    # # Note: Most Transformers models compute loss internally
+    # # We can train on this as our loss value simply by not specifying a loss when we compile().
+    # optimizer = AdamWeightDecay(learning_rate=LEARNING_RATE,
+    #                             weight_decay_rate=WEIGHT_DECAY)
+    # model.compile(optimizer=optimizer)
 
-    def metric_fn(eval_predictions):
-        preds, labels = eval_predictions
-        if isinstance(preds, tuple): preds = preds[0]
-        decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    # def metric_fn(eval_predictions):
+    #     preds, labels = eval_predictions
+    #     if isinstance(preds, tuple): preds = preds[0]
+    #     decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
-        labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
-        decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+    #     labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    #     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-        decoded_preds = [pred.strip() for pred in decoded_preds]
-        decoded_labels = [[label.strip()] for label in decoded_labels]
-        result = metric.compute(predictions=[decoded_preds], references=[decoded_labels], tokenize='ja-mecab ')
-        result = {"bleu": result["score"]}
-        prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
-        result["gen_len"] = np.mean(prediction_lens)
-        result = {k: round(v, 4) for k, v in result.items()}
-        return result
+    #     decoded_preds = [pred.strip() for pred in decoded_preds]
+    #     decoded_labels = [[label.strip()] for label in decoded_labels]
+    #     result = metric.compute(predictions=[decoded_preds], references=[decoded_labels], tokenize='ja-mecab ')
+    #     result = {"bleu": result["score"]}
+    #     prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
+    #     result["gen_len"] = np.mean(prediction_lens)
+    #     result = {k: round(v, 4) for k, v in result.items()}
+    #     return result
 
-    metric_callback = KerasMetricCallback(
-        metric_fn, eval_dataset=generation_dataset, predict_with_generate=True, use_xla_generation=True
-    )
+    # metric_callback = KerasMetricCallback(
+    #     metric_fn, eval_dataset=generation_dataset, predict_with_generate=True, use_xla_generation=True
+    # )
 
-    model.fit(
-        train_dataset,
-        validation_data=validation_dataset,
-        batch_size=BATCH_SIZE,
-        epochs=NUM_EPOCHS,
-        callbacks=[metric_callback]
-    )
+    # model.fit(
+    #     train_dataset,
+    #     validation_data=validation_dataset,
+    #     batch_size=BATCH_SIZE,
+    #     epochs=NUM_EPOCHS,
+    #     callbacks=[metric_callback]
+    # )
 
     save_model(model)
 

@@ -1,10 +1,11 @@
-import mlflow
 import os
 import time
+import mlflow
 
 from tensorflow.keras.models import load_model
 
 def save_model(model):
+    print(f"{model} my modellllll {type(model)}")
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     if os.environ.get("MODEL_TARGET") == "mlflow":
@@ -24,7 +25,6 @@ def save_model(model):
             # if metrics is not None:
             #     mlflow.log_metrics(metrics)
 
-            # STEP 3: push model to mlflow
             if model is not None:
                 mlflow.keras.log_model(keras_model=model,
                                        artifact_path="model",
