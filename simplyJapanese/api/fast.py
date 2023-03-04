@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pynpm import NPMPackage
-import pandas as pd
 
+from simplyJapanese.model.registery import load_model, load_tokenizer
 
 app = FastAPI()
-app.state.model = load_model() # Needs to be defined
+app.state.model = load_model()
+app.state.tokenizer = load_tokenizer()
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,22 +16,15 @@ app.add_middleware(
 )
 
 @app.get("/predict")
-def predict(input_data):
+def predict(input_text: str):
     """
-    Taking the input from the user into our
+    Taking the input text and predict using our model.
     """
+    # tokenized = app.state.tokenizer([input_text], return_tensors='np')
+    # generated = app.state.model.generate(**tokenized, max_length=128)
+    # pred_text = tokenizer.decode(generated[0], skip_special_tokens=True)
 
-    # preprocess data (sentence splitting, normalization, )
-    X_pred = "cleaned and tokenized data"
-
-    # make predictions
-    y_pred = app.state.model.predict(X_pred)
-
-    # Format y_pred to match output data requirements
-    output_data = y_pred
-
-    return {"activity": "It's happpening"}
-
+    return {"activity": "plz"}
 
 @app.get("/")
 def root():

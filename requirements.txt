@@ -28,9 +28,6 @@ pytest
 yapf
 
 # API
-gcsfs
-google-cloud-storage
-mlflow
 s3fs
 pynpm
 fastapi
