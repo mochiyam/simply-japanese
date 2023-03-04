@@ -142,6 +142,7 @@ def preprocess_and_train():
         epochs=NUM_EPOCHS,
         callbacks=[metric_callback, es],
         verbose=1)
+
     print(time.time() - start_time)
     print("/n⏰ Time to train:  {time.time() - start_time} seconds")
 

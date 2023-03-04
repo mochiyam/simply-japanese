@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 from simplyJapanese.model.params import MODEL_NAME
 
 def load_model():
-    """load_model
+    """
     Load the latest model!
     """
     if os.environ.get("MODEL_TARGET") == "mlflow":
@@ -38,12 +38,14 @@ def load_model():
 
 
 def load_tokenizer():
+    """
+    Load tokenizer :check if it already exists in the local file.
+    """
     tokenizer = None
     tokenizer_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
     while True:
         try:
             tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-            print("woohooo!!!!!!!!!!!!!!!!!!!!!!!!!")
             break
         except:
             if not tokenizer :
@@ -55,6 +57,9 @@ def load_tokenizer():
 
 
 def save_model(model):
+    """
+    Save model.
+    """
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     if os.environ.get("MODEL_TARGET") == "mlflow":
