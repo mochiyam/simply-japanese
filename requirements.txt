@@ -18,6 +18,8 @@ sentencepiece
 # metric evaluation
 sacrebleu[ja]
 
+mlflow~=1.26.1
+
 # tests/linter
 black
 coverage
