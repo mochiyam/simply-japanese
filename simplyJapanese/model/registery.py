@@ -60,7 +60,6 @@ def save_model(model):
     """
     Save model.
     """
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     if os.environ.get("MODEL_TARGET") == "mlflow":
 
