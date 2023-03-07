@@ -7,6 +7,7 @@ wheel>=0.29
 # data science
 numpy
 pandas
+nltk
 scikit-learn
 
 # Finetuning and training model
@@ -17,7 +18,6 @@ sentencepiece
 
 # metric evaluation
 sacrebleu[ja]
-
 mlflow~=1.26.1
 
 # tests/linter

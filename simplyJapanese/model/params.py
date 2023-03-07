@@ -7,7 +7,7 @@ INPUT_COL_NAME = 'original'
 LABEL_COL_NAME = 'simplified'
 
 # Hyperparameters
-BATCH_SIZE = 32
+BATCH_SIZE = 8
 LEARNING_RATE = 2e-5
 WEIGHT_DECAY = 0.01
-NUM_EPOCHS = 30
+NUM_EPOCHS = 1

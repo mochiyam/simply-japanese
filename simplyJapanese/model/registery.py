@@ -6,35 +6,44 @@ from tensorflow.keras.models import load_model
 from transformers import AutoTokenizer
 from simplyJapanese.model.params import MODEL_NAME
 
-def load_model():
+def load_the_model():
     """
     Load the latest model!
     """
-    if os.environ.get("MODEL_TARGET") == "mlflow":
-        stage = "Production"
+    # if os.environ.get("MODEL_TARGET") == "mlflow":
+    #     stage = "Production"
 
-        print(f"/n Loading model from mlflow from {stage} stage")
+    #     print(f"/n Loading model from mlflow from {stage} stage")
 
-        mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
+    #     mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
 
-        mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
+    #     mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
 
-        model_uri = f"models:/{mlflow_model_name}/{stage}"
-        print(f"- uri: {model_uri}")
+    #     model_uri = f"models:/{mlflow_model_name}/{stage}"
+    #     print(f"- uri: {model_uri}")
 
-        try:
-                model = mlflow.keras.load_model(model_uri=model_uri)
-                print("\n✅ Model loaded from mlflow!")
-        except:
-            print(f"\n❌ No model in stage {stage} on mlflow...")
-            return None
+    #     try:
+    #             model = mlflow.keras.load_model(model_uri=model_uri)
+    #             print("\n✅ Model loaded from mlflow!")
+    #     except:
+    #         print(f"\n❌ No model in stage {stage} on mlflow...")
+    #         return None
 
-    if os.environ.get("MODEL_TARGET") == "local":
-        model_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
-        model = load_model(model_path)
-        print("\n✅ Model loaded from disk!")
+    # if os.environ.get("MODEL_TARGET") == "local":
+    from tensorflow.keras.utils import serialize_keras_object
+    model_path = os.path.join("simplyJapanese", 'data', "4_MainModel")
+    model = load_model(model_path, custom_objects=None, compile=False, options=None)
+    serialized_model = serialize_keras_object(model)
 
-    return model
+    from transformers import TFT5ForConditionalGeneration
+    from tensorflow.keras.utils import deserialize_keras_object
+    deserialized_model = deserialize_keras_object(serialized_model,
+                               module_objects=globals(),
+                               custom_objects={"TFT5ForConditionalGeneration" : TFT5ForConditionalGeneration}
+    )
+
+    print("\n✅ Model loaded from disk!")
+    return deserialized_model
 
 
 def load_tokenizer():
@@ -109,3 +118,7 @@ def save_model(model):
     print("\n✅ Model saved locally!")
 
     return None
+
+
+# if __name__ == '__main__':
+#     load_the_model()

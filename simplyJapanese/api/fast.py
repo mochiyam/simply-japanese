@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from simplyJapanese.model.registery import load_model, load_tokenizer
+from simplyJapanese.model.registery import load_the_model, load_tokenizer
 
 app = FastAPI()
-app.state.model = load_model()
+app.state.model = load_the_model()
 app.state.tokenizer = load_tokenizer()
 
 app.add_middleware(
@@ -20,11 +20,11 @@ def predict(input_text: str):
     """
     Taking the input text and predict using our model.
     """
-    # tokenized = app.state.tokenizer([input_text], return_tensors='np')
-    # generated = app.state.model.generate(**tokenized, max_length=128)
-    # pred_text = tokenizer.decode(generated[0], skip_special_tokens=True)
+    tokenized = app.state.tokenizer([input_text], return_tensors='np')
+    generated = app.state.model.generate(**tokenized, max_length=128)
+    pred_text = app.state.tokenizer.decode(generated[0], skip_special_tokens=True)
 
-    return {"activity": "plz"}
+    return {"activity": pred_text}
 
 @app.get("/")
 def root():
